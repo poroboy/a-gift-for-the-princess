@@ -1,0 +1,757 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>A Gift for the Princess</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%91%91%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Fredoka:wght@400;500;600&family=Mali:wght@400;600&display=swap" rel="stylesheet">
+<link href="finale.css" rel="stylesheet">
+<link href="intro.css" rel="stylesheet">
+<style>
+  :root {
+    --amp: 1;            /* motion strength: 0 = still, 1 = gentle, 1.8 = lively */
+    --paper: #fde9ef;          /* pastel pink paper */
+    --paper-edge: #f2c9d5;
+    --ink: #5a3d2b;
+    --ink-soft: #8a6a52;
+    --accent: #c9826b;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: #f6dbe3;
+    font-family: "Mali", system-ui, sans-serif;
+    color: var(--ink);
+    display: flex; justify-content: center; align-items: center;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ---------- book page ---------- */
+  .page {
+    position: relative;
+    width: 100%; max-width: 460px;
+    height: 100dvh; max-height: 860px;
+    background: var(--paper);
+    overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  @media (min-width: 500px) {
+    .page { height: min(92dvh, 860px); border-radius: 6px 18px 18px 6px;
+      box-shadow: 0 1px 0 var(--paper-edge), 0 18px 40px rgba(90,60,30,.25), inset 10px 0 18px -12px rgba(120,80,40,.35); }
+  }
+  .page::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 20;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .55 0 0 0 0 .28 0 0 0 0 .36 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    mix-blend-mode: multiply;
+  }
+
+  /* ---------- scene ---------- */
+  .scene {
+    position: relative; flex: 1 1 auto; min-height: 0;
+    overflow: hidden;
+    background: var(--paper);
+    -webkit-mask-image: linear-gradient(#000 91%, transparent);
+            mask-image: linear-gradient(#000 91%, transparent);
+  }
+
+  /* camera: the whole scene can push in (e.g. onto the gift on the last page) */
+  .cam { position: absolute; inset: 0; transform-origin: 0 0; transition: transform 1.5s cubic-bezier(.45,.05,.2,1); }
+
+  /* glowing tap target over the gift the knight holds out */
+  .gift-spot {
+    position: absolute; left: 82%; top: 54%; width: 36%; aspect-ratio: 1;
+    transform: translate(-50%, -50%);
+    border: 0; padding: 0; border-radius: 50%; cursor: pointer;
+    background: radial-gradient(closest-side, rgba(255,236,170,.8), rgba(255,215,130,.3) 55%, rgba(255,215,130,0));
+    mix-blend-mode: screen;
+    animation: giftGlow 1.8s ease-in-out infinite;
+  }
+  .gift-spot[hidden] { display: none; }
+  @keyframes giftGlow { 0%,100% { transform: translate(-50%,-50%) scale(.9); opacity: .65; } 50% { transform: translate(-50%,-50%) scale(1.18); opacity: 1; } }
+  .burst { position: absolute; width: 16px; height: 16px; color: #ffd36e; pointer-events: none; z-index: 9;
+    filter: drop-shadow(0 0 4px rgba(255,210,120,.9));
+    animation: burst 1s cubic-bezier(.2,.7,.3,1) forwards; }
+  @keyframes burst { 0% { transform: translate(-50%,-50%) scale(.2); opacity: 0; } 15% { opacity: 1; }
+    100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1) rotate(90deg); opacity: 0; } }
+  .toast {
+    position: absolute; z-index: 12; left: 50%; bottom: 8%; transform: translate(-50%, 10px);
+    width: max-content; max-width: 86%; text-align: center;
+    font-size: 14px; color: var(--ink); background: rgba(255,250,240,.92); padding: 8px 14px; border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(90,60,30,.18);
+    opacity: 0; pointer-events: none; transition: opacity .4s, transform .4s;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  /* background: two slots that crossfade; each = parallax wrapper > cover-fit box > img + glows */
+  .bg { position: absolute; inset: 0; opacity: 0; transition: opacity .7s ease; }
+  .bg.on { opacity: 1; }
+  .bg-par { position: absolute; inset: 0; transition: transform .6s cubic-bezier(.2,.7,.3,1); }
+  .bg-fit { position: absolute; }
+  .bg-fit img { width: 100%; height: 100%; display: block; user-select: none; -webkit-user-drag: none;
+    filter: brightness(.95) contrast(.94) saturate(.95); }   /* push the painting back a touch so characters pop */
+  .bg-fit.pan { animation: pan 22s ease-in-out infinite alternate; }
+  @keyframes pan { from { transform: translateX(0); } to { transform: translateX(var(--pan)); } }
+
+  .glow {
+    position: absolute; border-radius: 50%; pointer-events: none;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(closest-side, rgba(var(--c), .75), rgba(var(--c), .25) 45%, rgba(var(--c), 0));
+    mix-blend-mode: screen;
+  }
+  .glow.pulse   { animation: glowPulse 3.2s ease-in-out infinite; }
+  .glow.flicker { animation: glowFlicker 2.3s linear infinite; }
+  @keyframes glowPulse { 0%,100% { opacity: .35; transform: translate(-50%,-50%) scale(.92); } 50% { opacity: .9; transform: translate(-50%,-50%) scale(1.06); } }
+  @keyframes glowFlicker {
+    0%,100% { opacity: .75; } 12% { opacity: .55; } 20% { opacity: .9; } 34% { opacity: .65; }
+    48% { opacity: .95; } 60% { opacity: .6; } 74% { opacity: .85; } 88% { opacity: .7; }
+  }
+
+  .cloud {
+    position: absolute; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(closest-side, rgba(255,255,255,.7), rgba(255,255,255,0));
+    filter: blur(3px);
+    animation: drift linear infinite;
+    transition: opacity .7s;
+  }
+  @keyframes drift { from { transform: translateX(-160px); } to { transform: translateX(560px); } }
+
+  /* ---------- actor (the knight) ---------- */
+  .ground-shadow {
+    position: absolute; left: 50%; height: 14px;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(80,55,30,.34), rgba(80,55,30,0));
+    transform: translateX(-50%);
+    animation: shadowBreath 3.6s ease-in-out infinite;
+  }
+  .actor {
+    position: absolute; left: 50%;
+    transform: translateX(-50%);
+    cursor: pointer;
+  }
+  .actor, .ground-shadow { transition: left .45s ease, bottom .45s ease, width .3s ease, margin .6s cubic-bezier(.2,.7,.3,1); }
+  .actor-hop, .actor-pop, .idle { position: absolute; inset: 0; transform-origin: 50% 100%; }
+  .actor svg, .actor img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: visible; user-select: none; -webkit-user-drag: none;
+    /* thin warm-brown outline + soft drop shadow so the knight never melts into a light background */
+    filter: drop-shadow(0 0 .8px rgba(72,45,24,.9)) drop-shadow(0 0 2.5px rgba(72,45,24,.35)) drop-shadow(0 7px 10px rgba(60,38,18,.22)); }
+  .actor img[hidden], .actor svg[hidden] { display: none; }
+
+  .idle.breathe { animation: breatheSway 3.6s ease-in-out infinite; }
+  .idle.float   { animation: float 2.6s ease-in-out infinite; }
+  .idle.gallop  { animation: gallop .55s ease-in-out infinite; }
+  @keyframes breatheSway {
+    0%,100% { transform: rotate(0) scale(1, 1); }
+    25%     { transform: rotate(calc(.7deg * var(--amp))) scale(calc(1 - .002 * var(--amp)), calc(1 + .007 * var(--amp))); }
+    50%     { transform: rotate(0) scale(calc(1 - .004 * var(--amp)), calc(1 + .014 * var(--amp))); }
+    75%     { transform: rotate(calc(-.7deg * var(--amp))) scale(calc(1 - .002 * var(--amp)), calc(1 + .007 * var(--amp))); }
+  }
+  @keyframes float {
+    0%,100% { transform: translateY(0) rotate(calc(-1deg * var(--amp))); }
+    50%     { transform: translateY(calc(-4% * var(--amp))) rotate(calc(1deg * var(--amp))); }
+  }
+  @keyframes gallop {
+    0%,100% { transform: translateY(0) rotate(calc(-1.2deg * var(--amp))); }
+    50%     { transform: translateY(calc(-2.5% * var(--amp))) rotate(calc(1.2deg * var(--amp))); }
+  }
+
+  /* front-facing rig: body / head / plume move separately */
+  .breath   { transform-origin: 180px 640px; animation: breath 3.6s ease-in-out infinite; }
+  .head-sway{ transform-origin: 180px 362px; animation: sway 7.2s ease-in-out infinite; }
+  .head-bob { animation: bob 3.6s ease-in-out infinite; animation-delay: -.25s; }
+  .plume    { transform-origin: 172px 126px; animation: plume 4.3s ease-in-out infinite; animation-delay: -1s; }
+  @keyframes breath { 0%,100% { transform: scale(1, 1); } 50% { transform: scale(calc(1 - .004 * var(--amp)), calc(1 + .014 * var(--amp))); } }
+  @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(calc(-2.6px * var(--amp))); } }
+  @keyframes sway { 0%,100% { transform: rotate(calc(-1.4deg * var(--amp))); } 50% { transform: rotate(calc(1.4deg * var(--amp))); } }
+  @keyframes plume { 0%,100% { transform: rotate(calc(-3.5deg * var(--amp))); } 50% { transform: rotate(calc(3deg * var(--amp))); } }
+  @keyframes shadowBreath {
+    0%,100% { transform: translateX(-50%) scaleX(1); opacity: 1; }
+    50%     { transform: translateX(-50%) scaleX(calc(1 - .02 * var(--amp))); opacity: .9; }
+  }
+  .lid  { transform: scaleY(0); animation: blink 4.6s infinite; }
+  .lash { opacity: 0; animation: lash 4.6s infinite; }
+  .lid.l { transform-origin: 140.5px 272px; }
+  .lid.r { transform-origin: 220px 270px; }
+  @keyframes blink { 0%, 91%, 100% { transform: scaleY(0); } 93.5%, 95.5% { transform: scaleY(1); } }
+  @keyframes lash  { 0%, 92.8%, 96.2%, 100% { opacity: 0; } 93.5%, 95.5% { opacity: 1; } }
+
+  .actor-hop.hop { animation: hop .9s cubic-bezier(.3,.7,.4,1); }
+  @keyframes hop {
+    0%   { transform: translateY(0) scale(1,1); }
+    14%  { transform: translateY(0) scale(1.05,.93); }
+    40%  { transform: translateY(-11%) scale(.97,1.04); }
+    66%  { transform: translateY(0) scale(1.04,.95); }
+    82%  { transform: translateY(-1.5%) scale(.99,1.01); }
+    100% { transform: translateY(0) scale(1,1); }
+  }
+
+  .still .breath, .still .head-sway, .still .head-bob, .still .plume, .still .lid, .still .lash,
+  .still .idle, .still .ground-shadow, .still .bg-fit.pan, .still .glow { animation: none; }
+
+  /* ---------- effects ---------- */
+  .fx { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+  .no-fx .fx, .no-fx .cloud, .no-fx .glow { display: none; }
+  .sparkle {
+    position: absolute; width: 14px; height: 14px; color: #fff6c9;
+    filter: drop-shadow(0 0 4px rgba(255,220,140,.9));
+    animation: twinkle ease-in-out infinite;
+    transition: opacity .7s;
+  }
+  .hide-sparkles .sparkle { opacity: 0; }
+  @keyframes twinkle { 0%,100% { transform: scale(.2) rotate(0); opacity: 0; } 50% { transform: scale(1) rotate(45deg); opacity: 1; } }
+  .mote {
+    position: absolute; bottom: -10px; width: 5px; height: 5px; border-radius: 50%;
+    background: radial-gradient(circle, #fffbe8 0 35%, rgba(255,226,150,0) 70%);
+    animation: rise linear forwards;
+  }
+  @keyframes rise { 0% { transform: translate(0,0); opacity: 0; } 15% { opacity: .95; } 100% { transform: translate(var(--dx), -70vh); opacity: 0; } }
+  .petal {
+    position: absolute; top: -20px; width: 11px; height: 8px;
+    background: linear-gradient(135deg, #ffd6dc, #f3a7b5);
+    border-radius: 80% 0 80% 0; opacity: .9;
+    animation: fall linear forwards;
+  }
+  @keyframes fall {
+    0%   { transform: translate(0, 0) rotate(0); }
+    25%  { transform: translate(calc(var(--dx) * .3 + 14px), 25vh) rotate(110deg); }
+    50%  { transform: translate(calc(var(--dx) * .55 - 10px), 50vh) rotate(200deg); }
+    75%  { transform: translate(calc(var(--dx) * .8 + 12px), 75vh) rotate(290deg); }
+    100% { transform: translate(var(--dx), 100vh) rotate(380deg); opacity: .6; }
+  }
+  .heart {
+    position: absolute; width: 22px; height: 22px; color: #ef8fa2; pointer-events: none; z-index: 8;
+    animation: heartUp 1.3s cubic-bezier(.2,.7,.3,1) forwards;
+  }
+  @keyframes heartUp {
+    0%   { transform: translate(-50%, 0) scale(.3); opacity: 0; }
+    20%  { opacity: 1; }
+    100% { transform: translate(calc(-50% + var(--dx)), -120px) scale(1) rotate(var(--rot)); opacity: 0; }
+  }
+
+  /* ---------- text ---------- */
+  .story {
+    position: relative; z-index: 5;
+    padding: 14px 26px max(18px, env(safe-area-inset-bottom));
+    min-height: 25%;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .story p {
+    /* auto margins centre the words between the top of the panel and the buttons, for 1–3 lines alike */
+    margin: auto 0; font-size: clamp(17px, 4.6vw, 20px); line-height: 1.75; text-align: center;
+  }
+  .story p.title { font-family: "Fredoka", "Mali", sans-serif; font-size: clamp(26px, 7.6vw, 32px); font-weight: 600; line-height: 1.3; color: #a9583f; }
+  .story p span { opacity: 0; display: inline-block; animation: wordIn .55s ease forwards; white-space: pre; }
+  @keyframes wordIn { from { opacity: 0; transform: translateY(6px); filter: blur(3px); } to { opacity: 1; transform: none; filter: none; } }
+  .story .foot { display: flex; align-items: center; justify-content: space-between; color: var(--ink-soft); font-size: 13px; }
+  .story .foot button { font: inherit; font-size: 15px; color: var(--ink); background: none; border: 0; padding: 8px 4px; cursor: pointer; }
+  .story .foot button:disabled { opacity: .25; cursor: default; }
+  #next { animation: nudge 1.8s ease-in-out infinite; }
+  @keyframes nudge { 50% { transform: translateX(4px); } }
+
+  .turn { position: absolute; inset: 0; z-index: 15; pointer-events: none;
+    background: linear-gradient(90deg, rgba(253,233,239,0), var(--paper) 30%, var(--paper) 70%, rgba(253,233,239,0));
+    transform: translateX(110%); }
+  .turn.go { animation: sweep .55s ease-in-out; }
+  .turn.back { animation: sweepBack .55s ease-in-out; }
+  @keyframes sweep { from { transform: translateX(110%); } to { transform: translateX(-110%); } }
+  @keyframes sweepBack { from { transform: translateX(-110%); } to { transform: translateX(110%); } }
+
+  /* ---------- demo controls (not part of the real site) ---------- */
+  .demo-bar {
+    position: absolute; top: max(10px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
+    z-index: 30; display: flex; gap: 6px; align-items: center;
+    background: rgba(255,250,240,.85); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(140,100,60,.25); border-radius: 999px; padding: 4px;
+    font-size: 13px; white-space: nowrap;
+  }
+  .demo-bar button { font: inherit; border: 0; background: none; color: var(--ink-soft); padding: 6px 11px; border-radius: 999px; cursor: pointer; }
+  .demo-bar button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+  .demo-bar .sep { width: 1px; height: 18px; background: rgba(140,100,60,.25); }
+  body:not(.dev) .demo-bar { display: none; }   /* dev controls only with ?dev in the URL */
+  .hint {
+    position: absolute; z-index: 6; left: 50%; top: 9%; transform: translateX(-50%);
+    font-size: 13px; color: var(--ink-soft); background: rgba(255,250,240,.85); padding: 4px 12px; border-radius: 999px;
+    transition: opacity .5s; pointer-events: none; white-space: nowrap;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cloud, #next { animation: none; }
+  }
+</style>
+</head>
+<body>
+<main class="page" id="page">
+  <div class="demo-bar" role="group" aria-label="ตัวเลือกเดโม">
+    <button data-amp="0">นิ่ง</button>
+    <button data-amp="1" aria-pressed="true">เบา</button>
+    <button data-amp="1.8">กลาง</button>
+    <span class="sep"></span>
+    <button id="fxBtn" aria-pressed="true">✨ เอฟเฟกต์</button>
+  </div>
+
+  <section class="scene" id="scene">
+   <div class="cam" id="cam">
+    <div class="bg" id="bg0"><div class="bg-par"><div class="bg-fit"><img alt=""><div class="glows"></div></div></div></div>
+    <div class="bg" id="bg1"><div class="bg-par"><div class="bg-fit"><img alt=""><div class="glows"></div></div></div></div>
+
+    <div class="cloud" style="top:7%;  width:160px; height:48px; animation-duration:80s; animation-delay:-20s"></div>
+    <div class="cloud" style="top:17%; width:120px; height:36px; animation-duration:105s; animation-delay:-60s"></div>
+
+    <div class="fx" id="fxBack"></div>
+
+    <div class="ground-shadow" id="shadow"></div>
+    <div class="actor" id="actor" role="button" aria-label="แตะอัศวิน">
+      <div class="actor-hop" id="hop">
+        <div class="actor-pop" id="pop">
+          <div class="idle" id="idle">
+            <svg id="rig" viewBox="0 0 361 642" aria-hidden="true">
+              <defs>
+                <clipPath id="cBody"><rect x="0" y="315" width="361" height="340"/></clipPath>
+                <clipPath id="cHead"><polygon points="22,322 26,240 60,170 120,128 172,124 240,135 300,180 330,255 330,316 302,344 250,364 180,371 110,364 70,348"/></clipPath>
+                <clipPath id="cPlume"><rect x="118" y="0" width="215" height="129"/></clipPath>
+              </defs>
+              <g class="breath">
+                <image href="assets/characters/knight-front.png" width="361" height="642" clip-path="url(#cBody)"/>
+                <g class="head-sway"><g class="head-bob">
+                  <image href="assets/characters/knight-front.png" width="361" height="642" clip-path="url(#cHead)"/>
+                  <g class="lid l"><ellipse cx="140.5" cy="291.5" rx="12.5" ry="20" fill="#fdd9aa"/></g>
+                  <g class="lid r"><ellipse cx="220" cy="289" rx="12.5" ry="19.5" fill="#fdd9aa"/></g>
+                  <path class="lash" d="M129 296 Q140.5 304 152 296" stroke="#5c2f13" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+                  <path class="lash" d="M208.5 293 Q220 301 231.5 293" stroke="#5c2f13" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+                  <g class="plume">
+                    <image href="assets/characters/knight-front.png" width="361" height="642" clip-path="url(#cPlume)"/>
+                  </g>
+                </g></g>
+              </g>
+            </svg>
+            <img id="poseImg" alt="" hidden>
+            <button class="gift-spot" id="giftSpot" aria-label="เปิดของขวัญ" hidden></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fx" id="fxFront"></div>
+   </div>
+    <div class="hint" id="hint">ลองแตะอัศวินดูสิ 👆</div>
+    <div class="toast" id="toast"></div>
+  </section>
+
+  <section class="story">
+    <p id="text"></p>
+    <div class="foot">
+      <button id="prev" aria-label="หน้าก่อน">‹ ก่อนหน้า</button>
+      <span id="pageNo"></span>
+      <button id="next" aria-label="หน้าถัดไป">ต่อไป ›</button>
+    </div>
+  </section>
+  <div class="turn" id="turn"></div>
+</main>
+
+<script src="finale.js"></script>
+<script src="intro.js"></script>
+<script>
+(() => {
+  const CHAR = 'assets/characters/', BG = 'assets/scenes/';
+  if (new URLSearchParams(location.search).has('dev')) document.body.classList.add('dev');
+  const root = document.documentElement;
+  const page = document.getElementById('page');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- scenes ----------
+     ground: where feet stand, as a fraction of the painting's height
+     glows:  x, y (fractions of the painting), r (fraction of painting width), colour, kind */
+  const LANTERN = '255,205,120';
+  const SCENES = {
+    cover:     { src: 'bg-cover.webp',      w: 1024, h: 1536, ground: .85,
+                 fx: { petals: 1, sparkles: 1, clouds: 1 },
+                 glows: [{ x: .28, y: .305, r: .42, c: '255,240,190', k: 'pulse' }] },
+    village:   { src: 'bg-village.webp',    w: 1024, h: 1536, ground: .85,
+                 fx: { motes: 1, clouds: 1 } },
+    roomDay:   { src: 'bg-room-day.webp',   w: 1024, h: 1536, ground: .86,
+                 fx: { motes: 1 },
+                 glows: [{ x: .40, y: .62, r: .5, c: '255,236,190', k: 'pulse' }] },
+    roomNight: { src: 'bg-room-night.webp', w: 1024, h: 1536, ground: .86,
+                 fx: { sparkles: 1, motes: 1 },
+                 glows: [{ x: .465, y: .385, r: .2, c: '255,196,110', k: 'flicker' },
+                         { x: .465, y: .40,  r: .5, c: '255,180,100', k: 'pulse' }] },
+    journey:   { src: 'bg-journey.webp',    w: 1536, h: 1024, ground: .84, pan: true,
+                 fx: { petals: 1, clouds: 1 } },
+    castle:    { src: 'bg-castle.webp',     w: 1024, h: 1536, ground: .88,
+                 fx: { petals: 1, sparkles: 1 },
+                 glows: [{ x: .505, y: .37, r: .34, c: '255,225,140', k: 'pulse' },
+                   ...[[.078,.485],[.3125,.381],[.386,.397],[.625,.397],[.701,.381],[.923,.485]]
+                     .map(([x, y]) => ({ x, y, r: .09, c: LANTERN, k: 'flicker' }))] },
+  };
+
+  /* ---------- story pages ----------
+     pose: file in assets/characters ('front' = rigged cover knight)
+     idle: breathe | float | gallop ; scale: size tweak ; lift: raise feet (source px)
+     x: horizontal position (0..1 of the scene) ; glows: extra glows for this page only */
+  const PAGES = [
+    { scene: 'village',   pose: 'bored-sit',        text: 'กาลครั้งหนึ่ง มีอัศวินตัวเล็กๆ คนหนึ่ง ใช้ชีวิตไปวันๆ ในดินแดนที่แสนธรรมดา' },
+    { scene: 'roomDay',   pose: 'surprised-letter', text: 'จนเมื่อเดือนก่อน อัศวินได้รับข้อความแรกจากเจ้าหญิงองค์หนึ่ง' },
+    { scene: 'roomNight', pose: 'hug-letter',       text: 'ตั้งแต่วันนั้น โลกของอัศวินก็สดใสขึ้น' },
+    { scene: 'roomDay',   pose: 'jump-cheer', idle: 'float', lift: 50,
+      glows: [{ x: .83, y: .247, r: .2, c: '255,150,170', k: 'pulse' }],
+      text: 'แล้ววันหนึ่ง อัศวินได้ข่าวว่า วันที่ 14 ธันวาคม คือวันสำคัญของเจ้าหญิง!' },
+    { scene: 'journey',   pose: 'pony-ride', idle: 'gallop', scale: .52, lift: 30, riding: true,
+      text: 'อัศวินจึงรีบออกเดินทาง ข้ามภูเขา ข้ามป่า มุ่งหน้าไปยังปราสาทของเจ้าหญิง' },
+    { scene: 'castle',    pose: 'shy',              text: 'แต่พอมาถึงหน้าปราสาท อัศวินกลับตัวเล็กลง… เจ้าหญิงช่างสูงส่ง ส่วนเขาเป็นแค่อัศวินตัวเล็กๆ คนหนึ่ง' },
+    { scene: 'castle',    pose: 'walk-gift', x: .42, text: 'อัศวินสูดหายใจลึกๆ "ถึงตัวจะเล็ก แต่มีความมุ่งมั่น" แล้วก้าวเข้าไป' },
+    { scene: 'castle',    pose: 'kneel-gift', cam: { zoom: 1.15 },
+      text: 'อัศวินคุกเข่าลง ยื่นของขวัญให้ แล้วพูดว่า "สุขสันต์วันเกิดนะ เจ้าหญิง"' },
+    // the twist: the princess is whoever is reading - the camera pushes in on the gift held out to the screen
+    { scene: 'castle',    pose: 'kneel-gift', cam: { zoom: 1.9, focus: 'gift' }, gift: true,
+      hint: '',
+      text: 'เจ้าหญิงแตะเพื่อเปิดของขวัญได้เลย' },
+  ];
+  const REACTIONS = ['wave', 'shy', 'clap', 'cheer'];
+  const BASE_H = 650;   // source px of a standing knight
+  const CH = .54;       // a standing knight is this share of the scene height - same on every page
+  const SWAP_ON_TAP = false;   // true = tapping switches to a random reaction pose for a moment
+
+  let SIZES = { front: { w: 361, h: 642 } };
+
+  /* ---------- elements ---------- */
+  const scene = document.getElementById('scene');
+  const slots = [document.getElementById('bg0'), document.getElementById('bg1')];
+  const actor = document.getElementById('actor'), hop = document.getElementById('hop');
+  const pop = document.getElementById('pop'), idle = document.getElementById('idle');
+  const rig = document.getElementById('rig'), img = document.getElementById('poseImg');
+  const shadow = document.getElementById('shadow'), hint = document.getElementById('hint');
+  const textEl = document.getElementById('text'), pageNo = document.getElementById('pageNo');
+  const prevBtn = document.getElementById('prev'), nextBtn = document.getElementById('next');
+  const turn = document.getElementById('turn');
+  const cam = document.getElementById('cam'), giftSpot = document.getElementById('giftSpot');
+  const toast = document.getElementById('toast');
+  const GIFT_AT = { x: .82, y: .54 };   // gift centre inside kneel-gift.webp
+  const HINT_DEFAULT = hint.textContent;
+  let tapped = false;
+  const clouds = [...document.querySelectorAll('.cloud')];
+  const back = document.getElementById('fxBack'), front = document.getElementById('fxFront');
+
+  let idx = 0, shown = null, reactTimer = null, lastReaction = null;
+  let curScene = null, activeSlot = 0, fit = null;   // fit = painting box in scene px
+
+  /* ---------- motion level / effects toggles ---------- */
+  const ampBtns = document.querySelectorAll('[data-amp]');
+  function setAmp(v) {
+    root.style.setProperty('--amp', v);
+    page.classList.toggle('still', v === '0');
+    ampBtns.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.amp === v)));
+  }
+  ampBtns.forEach(b => b.addEventListener('click', () => setAmp(b.dataset.amp)));
+  if (reduced) setAmp('0');
+  const fxBtn = document.getElementById('fxBtn');
+  let fxOn = !reduced;
+  function setFx(on) { fxOn = on; page.classList.toggle('no-fx', !on); fxBtn.setAttribute('aria-pressed', String(on)); }
+  fxBtn.addEventListener('click', () => setFx(!fxOn));
+  setFx(fxOn);
+
+  /* ---------- background: cover-fit the painting, keep the ground in view ---------- */
+  const OVERSCAN = 1.04;     // a little extra so parallax never shows an edge
+  function computeFit(s) {
+    const W = scene.clientWidth, H = scene.clientHeight;
+    const k = Math.max(W / s.w, H / s.h) * OVERSCAN;
+    const w = s.w * k, h = s.h * k;
+    // centre horizontally; vertically keep the ground line near 86% of the scene
+    let top = H * .86 - s.ground * h;
+    top = Math.min(0, Math.max(H - h, top));   // clamp so the painting always covers the scene
+    const left = s.pan ? 0 : (W - w) / 2;
+    return { W, H, w, h, left, top };
+  }
+  function placeSlot(slot, s) {
+    const f = computeFit(s);
+    const box = slot.querySelector('.bg-fit');
+    Object.assign(box.style, { width: f.w + 'px', height: f.h + 'px', left: f.left + 'px', top: f.top + 'px' });
+    box.classList.toggle('pan', !!s.pan && !reduced);
+    box.style.setProperty('--pan', (f.W - f.w) + 'px');
+    return f;
+  }
+  function glowHTML(list, f) {
+    return (list || []).map(g =>
+      `<div class="glow ${g.k}" style="left:${g.x * 100}%;top:${g.y * 100}%;width:${g.r * f.w}px;height:${g.r * f.w}px;--c:${g.c};animation-delay:${(-Math.random() * 3).toFixed(2)}s"></div>`
+    ).join('');
+  }
+  function showScene(name, extraGlows) {
+    const s = SCENES[name];
+    if (name !== curScene) {
+      const next = slots[1 - activeSlot], prev = slots[activeSlot];
+      const im = next.querySelector('img');
+      fit = placeSlot(next, s);
+      im.src = BG + s.src;
+      const reveal = () => { next.classList.add('on'); prev.classList.remove('on'); };
+      (im.decode ? im.decode() : Promise.resolve()).then(reveal, reveal);
+      activeSlot = 1 - activeSlot;
+      curScene = name;
+    }
+    slots[activeSlot].querySelector('.glows').innerHTML = glowHTML([...(s.glows || []), ...(extraGlows || [])], fit);
+    const fx = s.fx || {};
+    clouds.forEach(c => c.style.opacity = fx.clouds ? 1 : 0);
+    back.classList.toggle('hide-sparkles', !fx.sparkles);
+  }
+
+  /* ---------- actor placement: feet on the painted ground ---------- */
+  function layout(pose, p) {
+    const s = SCENES[p.scene] || SCENES[curScene];
+    const f = fit || computeFit(s);
+    const size = SIZES[pose] || SIZES.front;
+    const k = CH * f.H / BASE_H * (p.scale || 1);
+    const groundY = f.top + s.ground * f.h;             // px from scene top
+    const bottom = f.H - groundY;
+    actor.style.width = (size.w * k) + 'px';
+    actor.style.height = (size.h * k) + 'px';
+    actor.style.bottom = (bottom + (p.lift || 0) * k) + 'px';
+    actor.style.left = ((p.x ?? .5) * 100) + '%';
+    shadow.style.bottom = (bottom - 7) + 'px';
+    shadow.style.left = ((p.x ?? .5) * 100) + '%';
+    shadow.style.width = (Math.min(size.w, 380) * k * .75) + 'px';
+    applyCam(p, { w: size.w * k, h: size.h * k, left: (p.x ?? .5) * f.W, bottom: bottom + (p.lift || 0) * k }, f);
+  }
+  // push the camera in on the actor (or the gift it holds); clamp so no edge shows
+  function applyCam(p, a, f) {
+    const c = p.cam;
+    if (!c) { cam.style.transform = ''; return; }
+    const z = c.zoom || 1;
+    const fx = c.focus === 'gift' ? a.left - a.w / 2 + GIFT_AT.x * a.w : a.left;
+    const fy = c.focus === 'gift' ? f.H - a.bottom - a.h + GIFT_AT.y * a.h : f.H - a.bottom - a.h * .5;
+    const tx = Math.min(0, Math.max(f.W - z * f.W, f.W * .5 - z * fx));
+    const ty = Math.min(0, Math.max(f.H - z * f.H, f.H * .45 - z * fy));
+    cam.style.transform = `translate(${tx}px, ${ty}px) scale(${z})`;
+  }
+  function render(pose, p) {
+    const isRig = pose === 'front';
+    rig.toggleAttribute('hidden', !isRig);   // SVG elements have no .hidden property
+    img.toggleAttribute('hidden', isRig);
+    if (!isRig) img.src = CHAR + pose + '.webp';
+    idle.className = 'idle ' + (isRig ? '' : (p.idle || 'breathe'));
+    layout(pose, p);
+    shown = pose;
+  }
+  function swapTo(pose, p) {
+    if (reduced || shown === null || pose === shown) { render(pose, p); return Promise.resolve(); }
+    const out = pop.animate([{ transform: 'scale(1,1)' }, { transform: 'scale(1.08,.86)', opacity: .4 }],
+      { duration: 130, easing: 'ease-in', fill: 'forwards' });
+    return out.finished.then(() => {
+      render(pose, p);
+      const inn = pop.animate([
+        { transform: 'scale(.9,1.1)', opacity: .4 },
+        { transform: 'scale(1.04,.97)', opacity: 1, offset: .55 },
+        { transform: 'scale(1,1)', opacity: 1 }], { duration: 320, easing: 'ease-out' });
+      out.cancel();
+      return inn.finished;
+    });
+  }
+
+  /* ---------- pages ---------- */
+  const seg = 'Segmenter' in Intl ? new Intl.Segmenter('th', { granularity: 'word' }) : null;
+  function showText(p) {
+    const raw = seg ? [...seg.segment(p.text)].map(s => s.segment) : [...p.text];
+    // glue punctuation to its word so a quote mark never wraps alone
+    const parts = [];
+    let prefix = '', inQuote = false;
+    raw.forEach(w => {
+      if (/^["“”]$/.test(w)) {
+        if (!inQuote) { prefix += w; inQuote = true; }
+        else { parts.length ? parts[parts.length - 1] += w : prefix += w; inQuote = false; }
+      } else if (/^[!?,.…]+$/.test(w) && parts.length) {
+        parts[parts.length - 1] += w;
+      } else {
+        parts.push(prefix + w); prefix = '';
+      }
+    });
+    textEl.innerHTML = '';
+    textEl.classList.toggle('title', !!p.title);
+    parts.forEach((w, n) => {
+      const s = document.createElement('span');
+      s.textContent = w;
+      s.style.animationDelay = (reduced ? 0 : .15 + n * .07) + 's';
+      textEl.appendChild(s);
+    });
+  }
+  // quiet: draw the page (scene + pose) but hold back its words and hint - used under the storybook intro
+  function go(i, dir, quiet) {
+    if (i < 0 || i >= PAGES.length) return;
+    clearTimeout(reactTimer);
+    idx = i;
+    const p = PAGES[i];
+    if (dir) { turn.className = 'turn'; void turn.offsetWidth; turn.className = 'turn ' + (dir > 0 ? 'go' : 'back'); }
+    setTimeout(() => {
+      showScene(p.scene, p.glows);
+      swapTo(p.pose, p);
+      if (quiet) textEl.innerHTML = ''; else showText(p);
+      giftSpot.toggleAttribute('hidden', !p.gift);
+      const h = p.hint ?? HINT_DEFAULT;          // hint: '' hides it on that page
+      hint.textContent = h;
+      hint.style.opacity = !quiet && h && (p.hint || !tapped) ? 1 : 0;
+      toast.classList.remove('show');
+    }, dir ? 220 : 0);
+    pageNo.textContent = `— ${i + 1} —`;
+    prevBtn.disabled = i === 0 && !window.Intro;   // on page 1, "back" returns to the sealed book
+    nextBtn.disabled = i === PAGES.length - 1;
+  }
+  function backToBook() {
+    if (!window.Intro) return;
+    window.Intro.back({ bg: BG + SCENES.cover.src, onReveal: () => go(0) });
+    setTimeout(() => go(0, 0, true), 500);   // once the book covers the page, clear its words so they animate in again later
+  }
+  const goBack = () => idx === 0 ? backToBook() : go(idx - 1, -1);
+  prevBtn.addEventListener('click', goBack);
+  nextBtn.addEventListener('click', () => go(idx + 1, 1));
+  let sx = null;
+  scene.addEventListener('pointerdown', e => { sx = e.clientX; });
+  scene.addEventListener('pointerup', e => {
+    if (sx === null) return;
+    const dx = e.clientX - sx; sx = null;
+    if (Math.abs(dx) > 50) dx < 0 ? go(idx + 1, 1) : goBack();
+  });
+
+  /* ---------- tap the knight → reaction pose + hearts ---------- */
+  const heart = '<svg viewBox="0 0 24 24" width="100%" height="100%"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.6 1.2 4.3 2.4.7-1.2 2.2-2.4 4.3-2.4 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg>';
+  function hearts() {
+    const kr = actor.getBoundingClientRect(), sr = scene.getBoundingClientRect();
+    for (let i = 0; i < 5; i++) {
+      const h = document.createElement('div');
+      h.className = 'heart';
+      h.innerHTML = heart;
+      h.style.left = (kr.left - sr.left + kr.width * (.3 + Math.random() * .4)) + 'px';
+      h.style.top = (kr.top - sr.top + kr.height * .12) + 'px';
+      h.style.setProperty('--dx', (Math.random() * 90 - 45) + 'px');
+      h.style.setProperty('--rot', (Math.random() * 40 - 20) + 'deg');
+      h.style.animationDelay = (i * .08) + 's';
+      const sz = 14 + Math.random() * 12;
+      h.style.width = h.style.height = sz + 'px';
+      scene.appendChild(h);
+      h.addEventListener('animationend', () => h.remove());
+    }
+  }
+  /* ---------- tap the gift (last page) ---------- */
+  const star5 = '<svg viewBox="0 0 24 24" width="100%" height="100%"><path fill="currentColor" d="M12 0c.6 6.4 5.6 11.4 12 12-6.4.6-11.4 5.6-12 12-.6-6.4-5.6-11.4-12-12C6.4 11.4 11.4 6.4 12 0z"/></svg>';
+  giftSpot.addEventListener('click', e => {
+    e.stopPropagation();
+    hint.style.opacity = 0;
+    const gr = giftSpot.getBoundingClientRect(), sr = scene.getBoundingClientRect();
+    const cx = gr.left - sr.left + gr.width / 2, cy = gr.top - sr.top + gr.height / 2;
+    for (let i = 0; i < 14; i++) {
+      const b = document.createElement('div');
+      b.className = 'burst';
+      b.innerHTML = Math.random() < .35 ? heart : star5;
+      if (b.innerHTML === heart) b.style.color = '#ef8fa2';
+      const ang = Math.random() * Math.PI * 2, dist = 60 + Math.random() * 90;
+      b.style.left = cx + 'px'; b.style.top = cy + 'px';
+      b.style.setProperty('--dx', Math.cos(ang) * dist + 'px');
+      b.style.setProperty('--dy', Math.sin(ang) * dist + 'px');
+      const sz = 10 + Math.random() * 14;
+      b.style.width = b.style.height = sz + 'px';
+      scene.appendChild(b);
+      b.addEventListener('animationend', () => b.remove());
+    }
+    pop.animate([{ transform: 'rotate(0)' }, { transform: 'rotate(-3deg)' }, { transform: 'rotate(3deg)' }, { transform: 'rotate(0)' }],
+      { duration: 400, easing: 'ease-in-out' });
+    // → the finale: gift opens, wish, blow out the candles
+    setTimeout(openFinale, 550);
+  });
+  function openFinale() {
+    // "Read again" goes all the way back to the sealed storybook; page 1 waits quietly underneath
+    window.Finale.open({ bg: BG + SCENES.castle.src, charDir: CHAR, onReplay: () => {
+      go(0, 0, true);
+      if (window.Intro) window.Intro.show({ bg: BG + SCENES.cover.src, onReveal: () => go(0) });
+    } });
+  }
+
+  actor.addEventListener('click', e => {
+    e.stopPropagation();
+    tapped = true;
+    hint.style.opacity = 0;
+    hearts();
+    const p = PAGES[idx];
+    if (p.riding || !SWAP_ON_TAP) { hop.classList.remove('hop'); void hop.offsetWidth; hop.classList.add('hop'); return; }
+    const choices = REACTIONS.filter(r => r !== lastReaction && r !== p.pose);
+    const r = choices[Math.floor(Math.random() * choices.length)];
+    lastReaction = r;
+    clearTimeout(reactTimer);
+    swapTo(r, { scene: p.scene, x: p.x }).then(() => {
+      reactTimer = setTimeout(() => { if (PAGES[idx] === p) swapTo(p.pose, p); }, 1700);
+    });
+  });
+  hop.addEventListener('animationend', () => hop.classList.remove('hop'));
+
+  /* ---------- ambient particles ---------- */
+  const star = '<svg viewBox="0 0 24 24" width="100%" height="100%"><path fill="currentColor" d="M12 0c.6 6.4 5.6 11.4 12 12-6.4.6-11.4 5.6-12 12-.6-6.4-5.6-11.4-12-12C6.4 11.4 11.4 6.4 12 0z"/></svg>';
+  for (let i = 0; i < 9; i++) {
+    const s = document.createElement('div');
+    s.className = 'sparkle';
+    s.innerHTML = star;
+    s.style.left = (6 + Math.random() * 88) + '%';
+    s.style.top = (4 + Math.random() * 46) + '%';
+    const size = 8 + Math.random() * 10;
+    s.style.width = s.style.height = size + 'px';
+    s.style.animationDuration = (2.4 + Math.random() * 2.6) + 's';
+    s.style.animationDelay = (-Math.random() * 5) + 's';
+    back.appendChild(s);
+  }
+  const fxNow = () => (SCENES[curScene] || {}).fx || {};
+  function spawn(kind, cls, parent, setup, life) {
+    if (!fxOn || document.hidden || !fxNow()[kind]) return;
+    const el = document.createElement('div');
+    el.className = cls;
+    setup(el);
+    parent.appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+    setTimeout(() => el.remove(), life + 500);
+  }
+  if (!reduced) {
+    setInterval(() => spawn('motes', 'mote', back, el => {
+      el.style.left = (10 + Math.random() * 80) + '%';
+      el.style.setProperty('--dx', (Math.random() * 60 - 30) + 'px');
+      el.style.animationDuration = (6 + Math.random() * 5) + 's';
+    }, 11000), 900);
+    setInterval(() => spawn('petals', 'petal', front, el => {
+      el.style.left = (Math.random() * 100) + '%';
+      el.style.setProperty('--dx', (Math.random() * 120 - 40) + 'px');
+      el.style.animationDuration = (7 + Math.random() * 5) + 's';
+      el.style.transform = `scale(${.7 + Math.random() * .6})`;
+    }, 12000), 1700);
+  }
+
+  /* ---------- gentle parallax (finger / mouse) ---------- */
+  function parallax(nx, ny) {
+    if (reduced) return;
+    slots.forEach(sl => sl.querySelector('.bg-par').style.transform = `translate(${-nx * 8}px, ${-ny * 5}px)`);
+    actor.style.marginLeft = shadow.style.marginLeft = (-nx * 18) + 'px';
+  }
+  scene.addEventListener('pointermove', e => {
+    const r = scene.getBoundingClientRect();
+    parallax((e.clientX - r.left) / r.width - .5, (e.clientY - r.top) / r.height - .5);
+  });
+  scene.addEventListener('pointerleave', () => parallax(0, 0));
+
+  /* ---------- boot ---------- */
+  addEventListener('resize', () => {
+    if (!curScene) return;
+    fit = placeSlot(slots[activeSlot], SCENES[curScene]);
+    showScene(curScene, PAGES[idx].glows);
+    layout(shown, PAGES[idx]);
+  });
+  // preload paintings + poses so page turns are instant
+  Object.values(SCENES).forEach(s => { const i = new Image(); i.src = BG + s.src; });
+  fetch(CHAR + 'manifest.json').then(r => r.json()).then(m => {
+    SIZES = { ...m, ...SIZES };
+    Object.keys(m).forEach(n => { const i = new Image(); i.src = CHAR + n + '.webp'; });
+  }).catch(() => {}).finally(() => {
+    // dev shortcuts: #p9 jumps to a page, #finale opens the ending straight away
+    const m = location.hash.match(/^#p(\d+)$/);
+    const withBook = !location.hash;
+    go(m ? Math.min(+m[1], PAGES.length - 1) : 0, 0, withBook);
+    if (location.hash === '#finale') openFinale();
+    // first visit: the sealed storybook; page 1's words start only as the book fades away
+    if (withBook) window.Intro.show({ bg: BG + SCENES.cover.src, onReveal: () => go(0) });
+  });
+})();
+</script>
+</body>
+</html>

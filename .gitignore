@@ -1,0 +1,7 @@
+# original AI-generated sheets and backgrounds (large; the site uses the processed copies in assets/characters and assets/scenes)
+assets/source/
+
+# local tooling
+.claude/
+__pycache__/
+*.pyc

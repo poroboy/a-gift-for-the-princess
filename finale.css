@@ -1,0 +1,181 @@
+/* ===== Finale: chat → gift → cake → wish → tap the candles → Happy Birthday ===== */
+.finale {
+  position: absolute; inset: 0; z-index: 25; overflow: hidden;
+  display: flex; flex-direction: column;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Fredoka", "Mali", system-ui, sans-serif;
+}
+.finale[hidden] { display: none; }
+
+.f-bg { position: absolute; inset: -24px; }
+.f-bg img { width: 100%; height: 100%; object-fit: cover; filter: blur(8px) brightness(.93) saturate(.9); transform: scale(1.06); }
+.f-dim {
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(36,28,58,.92), rgba(58,38,52,.85));
+  opacity: 0; transition: opacity 1.6s ease;
+}
+.finale.dark .f-dim { opacity: .78; }
+.f-light {
+  position: absolute; left: 50%; top: 40%; width: 160%; aspect-ratio: 1; pointer-events: none;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(closest-side, rgba(255,204,128,.6), rgba(255,180,100,.2) 45%, rgba(255,180,100,0));
+  mix-blend-mode: screen;
+  opacity: 0; transition: opacity 1s ease;
+}
+.finale.dark .f-light { opacity: var(--light, 1); }
+.f-confetti { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; }
+
+/* ---------- stage ---------- */
+.f-stage { position: relative; z-index: 2; flex: 1 1 auto; min-height: 0; display: grid; place-items: center; }
+.f-gift, .f-cake { grid-area: 1 / 1; position: relative; }
+.f-gift { width: min(58vw, 240px); -webkit-tap-highlight-color: transparent; }
+.f-gift.tappable { cursor: pointer; animation: giftBob 1.6s ease-in-out infinite; }
+.f-gift.tappable::after {
+  content: ""; position: absolute; inset: -12%; border-radius: 50%; z-index: -1; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(255,232,160,.75), rgba(255,232,160,0));
+  animation: giftHalo 1.6s ease-in-out infinite;
+}
+@keyframes giftBob { 50% { transform: translateY(-4%) rotate(-1.5deg); } }
+@keyframes giftHalo { 0%,100% { opacity: .5; transform: scale(.9); } 50% { opacity: 1; transform: scale(1.08); } }
+.f-cake { width: min(80vw, 320px); opacity: 0; margin-top: 6%; transition: width .8s ease, margin .8s ease;
+  pointer-events: none; }   /* the hidden cake sits over the gift: let taps through; flames opt back in */
+.f-gift svg, .f-cake svg { width: 100%; display: block; overflow: visible; filter: drop-shadow(0 12px 16px rgba(50,30,15,.28)); }
+.g-lid, .g-box { transform-box: fill-box; transform-origin: 50% 100%; }
+
+.f-rays {
+  position: absolute; left: 50%; top: 42%; width: 190%; aspect-ratio: 1; pointer-events: none;
+  transform: translate(-50%, -50%) scale(.2); opacity: 0;
+  background: repeating-conic-gradient(from 0deg, rgba(255,240,190,.6) 0 5deg, rgba(255,240,190,0) 5deg 16deg);
+  -webkit-mask-image: radial-gradient(closest-side, #000 25%, transparent 72%);
+          mask-image: radial-gradient(closest-side, #000 25%, transparent 72%);
+}
+
+/* candle flames are buttons: tap one to blow it out */
+.flame {
+  position: absolute; width: 5.6%; aspect-ratio: .55; transform: translate(-50%, -94%);
+  border: 0; padding: 0; background: none; cursor: default; -webkit-tap-highlight-color: transparent;
+  pointer-events: auto;
+}
+.flame.unlit { pointer-events: none; }
+.flame::before { content: ""; position: absolute; inset: -60% -15% -170%; }   /* taller tap target: flame + candle, no overlap with neighbours */
+.flame.tappable { cursor: pointer; }
+.flame-in {
+  position: absolute; inset: 0; transform-origin: 50% 100%; pointer-events: none;
+  border-radius: 50% 50% 46% 46% / 62% 62% 38% 38%;
+  background: radial-gradient(ellipse at 50% 74%, #fffbe4 0 20%, #ffd86e 42%, #ff9d3e 72%, rgba(255,120,40,0) 100%);
+  box-shadow: 0 0 9px 3px rgba(255,196,96,.6), 0 0 24px 9px rgba(255,170,80,.25);
+  animation: flick .16s ease-in-out infinite alternate;
+}
+@keyframes flick {
+  from { transform: rotate(calc(var(--lean, 0deg) - 2.5deg)) scale(1, 1); }
+  to   { transform: rotate(calc(var(--lean, 0deg) + 2.5deg)) scale(.92, 1.07); }
+}
+.flame.unlit .flame-in { animation: none; transform: scale(0); opacity: 0; }
+.flame.lit-in .flame-in { animation: lightUp .35s cubic-bezier(.3,1.6,.5,1) both, flick .16s .35s ease-in-out infinite alternate; }
+@keyframes lightUp { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.flame.gust { --lean: 26deg; }
+.flame.out { pointer-events: none; }
+.flame.out .flame-in { animation: blowOut .3s ease-in forwards; }
+@keyframes blowOut { from { transform: rotate(var(--lean, 0deg)) scale(1); } to { transform: rotate(calc(var(--lean, 0deg) + 35deg)) scale(.1, .05); opacity: 0; } }
+.smoke {
+  position: absolute; width: 8px; height: 8px; border-radius: 50%; pointer-events: none; z-index: 200;
+  background: rgba(236,232,228,.75); filter: blur(2.5px);
+  transform: translate(-50%, -50%);
+  animation: smoke 1.8s ease-out forwards;
+}
+@keyframes smoke { to { transform: translate(calc(-50% + var(--dx)), calc(-50% - 70px)) scale(3.4); opacity: 0; } }
+
+.f-kwrap { position: absolute; left: 4%; bottom: 3%; width: min(34vw, 140px); z-index: 3; }
+.f-knight {
+  display: block; width: 100%;
+  opacity: 0; transform-origin: 50% 100%; cursor: pointer;
+  filter: drop-shadow(0 0 .8px rgba(72,45,24,.9)) drop-shadow(0 0 2.5px rgba(72,45,24,.35)) drop-shadow(0 7px 10px rgba(60,38,18,.22));
+}
+/* closing scene: the knight alone in the middle */
+.f-kwrap.solo { left: 50%; bottom: 2%; width: min(56vw, 230px); transform: translateX(-50%); }
+
+/* the knight's words: each word drifts up out of a soft blur, then they stay */
+.f-speech {
+  margin-top: 2px; max-width: min(94vw, 420px); text-align: center;
+  color: #8a4a36; font-size: clamp(18px, 5.2vw, 22px); font-weight: 500; line-height: 1.5;
+  text-shadow: 0 1px 0 #fff;
+  pointer-events: none;
+}
+.f-speech:empty { display: none; }
+.f-speech span {
+  display: inline-block; opacity: 0;
+  animation: speechIn 1s cubic-bezier(.2,.7,.3,1) forwards, speechGlow 2.4s ease-in-out 1;
+}
+@keyframes speechIn {
+  0%   { opacity: 0; transform: translateY(14px) scale(.96); filter: blur(6px); }
+  60%  { opacity: 1; filter: blur(0); }
+  100% { opacity: 1; transform: none; filter: none; }
+}
+@keyframes speechGlow { 0%, 100% { text-shadow: 0 1px 0 #fff; } 50% { text-shadow: 0 1px 0 #fff, 0 0 14px rgba(255,200,120,.9); } }
+.f-knight.show { opacity: 1; animation: knightIn .6s cubic-bezier(.3,1.5,.5,1) both, kBreathe 3.4s 1s ease-in-out infinite; }
+@keyframes knightIn { from { transform: translateY(30%) scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes kBreathe { 50% { transform: scale(calc(1 - .004 * var(--amp)), calc(1 + .016 * var(--amp))); } }
+.f-knight.jump { animation: kJump .8s cubic-bezier(.3,.7,.4,1); }
+@keyframes kJump { 15% { transform: scale(1.06,.92); } 45% { transform: translateY(-22%) scale(.97,1.05); } 70% { transform: scale(1.04,.95); } 100% { transform: none; } }
+
+/* ---------- text + controls ---------- */
+.f-ui {
+  position: relative; z-index: 4;
+  padding: 44px 24px max(22px, env(safe-area-inset-bottom));
+  min-height: 32%;
+  display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;
+  transition: color 1s;
+}
+/* soft paper panel behind the words so they read on any backdrop */
+.f-ui::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(rgba(253,233,239,0), rgba(253,233,239,.96) 34px);
+  transition: opacity 1s;
+}
+.finale.dark .f-ui::before { opacity: 0; }
+.finale.dark .f-ui { color: #fff6e6; text-shadow: 0 1px 8px rgba(30,20,40,.55); }
+
+.f-title { margin: 0; font-weight: 600; font-size: clamp(34px, 10vw, 46px); line-height: 1.1; letter-spacing: .5px; }
+.finale:not(.dark) .f-title {
+  color: #b14f39;
+  text-shadow: 0 2px 0 #fff, 0 3px 12px rgba(177,79,57,.2);
+}
+.f-sub { margin: 0; font-weight: 500; font-size: clamp(17px, 5vw, 21px); color: #8a5a45; }
+.f-msg { margin: 0; font-size: clamp(15px, 4.3vw, 17px); line-height: 1.55; max-width: 330px; }
+.f-title:empty, .f-sub:empty { display: none; }
+.f-title span, .f-sub span, .f-msg span { display: inline-block; opacity: 0; white-space: pre; animation: fWord .5s ease forwards; }
+@keyframes fWord { from { opacity: 0; transform: translateY(6px); filter: blur(3px); } to { opacity: 1; transform: none; filter: none; } }
+
+.f-hold {
+  position: relative; width: 88px; height: 88px; border-radius: 50%;
+  border: 0; padding: 0; cursor: pointer; color: inherit;
+  background: rgba(255,250,240,.14);
+  font-size: 34px; line-height: 88px;
+  touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  animation: holdPulse 2s ease-in-out infinite;
+}
+.f-hold svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); pointer-events: none; }
+.f-hold .track { fill: none; stroke: rgba(255,255,255,.25); stroke-width: 5; }
+.f-hold .prog  { fill: none; stroke: #ffd36e; stroke-width: 5; stroke-linecap: round; }
+.f-hold.holding { animation: none; transform: scale(.94); }
+@keyframes holdPulse { 50% { box-shadow: 0 0 0 10px rgba(255,220,140,.12); } }
+.f-btn {
+  font: inherit; font-size: 15px; font-weight: 500; color: inherit; background: rgba(255,255,255,.12);
+  border: 1.5px solid currentColor; border-radius: 999px; padding: 9px 20px; cursor: pointer;
+}
+.f-btn.solid { background: #c9826b; border-color: #c9826b; color: #fff; }
+.f-hold[hidden], .f-btn[hidden] { display: none; }
+.f-note { margin: 0; font-size: 14px; opacity: .8; min-height: 1em; }
+
+/* wish: the screen softly closes in, like closing your eyes */
+.f-wishveil {
+  position: absolute; inset: 0; z-index: 3; pointer-events: none;
+  background: radial-gradient(closest-side at 50% 42%, rgba(20,14,30,0) 30%, rgba(20,14,30,.85));
+  opacity: 0; transition: opacity .6s ease;
+}
+.finale.wishing .f-wishveil { opacity: var(--veil, 0); }
+
+@media (prefers-reduced-motion: reduce) {
+  .flame-in, .flame.lit-in .flame-in, .f-hold, .f-gift.tappable, .f-gift.tappable::after { animation: none; }
+}

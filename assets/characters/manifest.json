@@ -1,0 +1,67 @@
+{
+  "bored-sit": {
+    "w": 338,
+    "h": 643,
+    "src": "sheet-a-letter.png"
+  },
+  "surprised-letter": {
+    "w": 360,
+    "h": 670,
+    "src": "sheet-a-letter.png"
+  },
+  "hug-letter": {
+    "w": 367,
+    "h": 653,
+    "src": "sheet-a-letter.png"
+  },
+  "jump-cheer": {
+    "w": 425,
+    "h": 638,
+    "src": "sheet-a-letter.png"
+  },
+  "walk-gift": {
+    "w": 408,
+    "h": 641,
+    "src": "sheet-b-heroic.png"
+  },
+  "brave-sword": {
+    "w": 442,
+    "h": 647,
+    "src": "sheet-b-heroic.png"
+  },
+  "kneel-gift": {
+    "w": 441,
+    "h": 590,
+    "src": "sheet-b-heroic.png"
+  },
+  "bow": {
+    "w": 377,
+    "h": 635,
+    "src": "sheet-b-heroic.png"
+  },
+  "wave": {
+    "w": 406,
+    "h": 669,
+    "src": "sheet-c-cheerful.png"
+  },
+  "cheer": {
+    "w": 428,
+    "h": 672,
+    "src": "sheet-c-cheerful.png"
+  },
+  "shy": {
+    "w": 369,
+    "h": 657,
+    "src": "sheet-c-cheerful.png"
+  },
+  "clap": {
+    "w": 376,
+    "h": 671,
+    "src": "sheet-c-cheerful.png"
+  },
+  "pony-ride": {
+    "w": 970,
+    "h": 1198,
+    "src": "pony.png"
+  }
+}
